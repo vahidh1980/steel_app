@@ -10,12 +10,11 @@ class SteelApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'محاسبه وزن',
+      title: 'محاسبه‌گر وزن مقاطع استنلس استیل',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
         colorSchemeSeed: Colors.blueGrey,
-        fontFamily: 'Vazirmatn',
       ),
       home: const CalculatorPage(),
     );
@@ -43,32 +42,44 @@ class _CalculatorPageState extends State<CalculatorPage> {
   String product = 'ورق';
 
   final lengthCtrl = TextEditingController(text: '6');
-  final widthCtrl = TextEditingController(text: '1500');
+  final sheetWidthCtrl = TextEditingController(text: '1.5');
+  final widthCtrl = TextEditingController(text: '50');
   final thicknessCtrl = TextEditingController(text: '2');
   final diameterCtrl = TextEditingController(text: '50');
   final sideACtrl = TextEditingController(text: '40');
   final sideBCtrl = TextEditingController(text: '40');
   final countCtrl = TextEditingController(text: '1');
+  final priceCtrl = TextEditingController(text: '');
 
   double? weightOne;
   double? weightTotal;
+  double? totalPrice;
 
   static const double density = 7.85;
 
   @override
   void dispose() {
     lengthCtrl.dispose();
+    sheetWidthCtrl.dispose();
     widthCtrl.dispose();
     thicknessCtrl.dispose();
     diameterCtrl.dispose();
     sideACtrl.dispose();
     sideBCtrl.dispose();
     countCtrl.dispose();
+    priceCtrl.dispose();
     super.dispose();
   }
 
   double _p(String s) {
     return double.tryParse(s.trim().replaceAll('،', '.').replaceAll(',', '.')) ?? 0;
+  }
+
+  String _formatMoney(double v) {
+    final intVal = v.round();
+    final s = intVal.toString();
+    final reg = RegExp(r'\B(?=(\d{3})+(?!\d))');
+    return s.replaceAllMapped(reg, (m) => ',');
   }
 
   void _calc() {
@@ -85,27 +96,24 @@ class _CalculatorPageState extends State<CalculatorPage> {
 
     if (product == 'ورق') {
       L = _p(lengthCtrl.text);
-      W = _p(widthCtrl.text) / 1000.0;
+      W = _p(sheetWidthCtrl.text);
       t = _p(thicknessCtrl.text);
       one = L * W * t * density;
     } else if (product == 'لوله گرد') {
       D = _p(diameterCtrl.text);
       t = _p(thicknessCtrl.text);
       L = _p(lengthCtrl.text);
-      // مدل بازاری لوله: D * t بدون کم کردن ضخامت
       one = 3.1416 * density / 1000 * D * t * L;
     } else if (product == 'پروفیل مربع') {
       A = _p(sideACtrl.text);
       t = _p(thicknessCtrl.text);
       L = _p(lengthCtrl.text);
-      // مدل بازاری پروفیل مربع: 4 * A * t
       one = 4 * A * t * L * 0.00785;
     } else if (product == 'پروفیل مستطیل') {
       A = _p(sideACtrl.text);
       B = _p(sideBCtrl.text);
       t = _p(thicknessCtrl.text);
       L = _p(lengthCtrl.text);
-      // مدل بازاری پروفیل مستطیل: 2 * (A + B) * t
       one = 2 * (A + B) * t * L * 0.00785;
     } else if (product == 'میلگرد') {
       D = _p(diameterCtrl.text);
@@ -124,9 +132,14 @@ class _CalculatorPageState extends State<CalculatorPage> {
       one = (A + B - t) * t * L * 0.00785;
     }
 
+    double priceUnit = _p(priceCtrl.text);
+    double total = one * count;
+    double priceAll = total * priceUnit;
+
     setState(() {
       weightOne = one;
-      weightTotal = one * count;
+      weightTotal = total;
+      totalPrice = priceAll;
     });
   }
 
@@ -136,6 +149,9 @@ class _CalculatorPageState extends State<CalculatorPage> {
       child: TextField(
         controller: c,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        onTap: () {
+          c.clear();
+        },
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
@@ -150,7 +166,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
     if (product == 'ورق') {
       return [
         _field(lengthCtrl, 'طول (متر)', 'مثلا 6'),
-        _field(widthCtrl, 'عرض (میلی‌متر)', 'مثلا 1500'),
+        _field(sheetWidthCtrl, 'عرض (متر)', 'مثلا 1.5'),
         _field(thicknessCtrl, 'ضخامت (میلی‌متر)', 'مثلا 2'),
       ];
     } else if (product == 'لوله گرد') {
@@ -199,7 +215,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('ماشین‌حساب وزن مقاطع'),
+          title: const Text('محاسبه‌گر وزن مقاطع استنلس استیل'),
           centerTitle: true,
         ),
         body: SingleChildScrollView(
@@ -215,7 +231,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
                   border: Border.all(color: Colors.blueGrey.shade200),
                 ),
                 child: const Text(
-                  'چگالی برای همه محصولات: 7.85 گرم بر سانتی‌متر مکعب - محاسبه لوله و پروفیل به روش بازاری',
+                  'چگالی برای همه محصولات: 7.85 گرم بر سانتی‌متر مکعب',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 13),
                 ),
@@ -234,12 +250,14 @@ class _CalculatorPageState extends State<CalculatorPage> {
                     product = v;
                     weightOne = null;
                     weightTotal = null;
+                    totalPrice = null;
                   });
                 },
               ),
               const SizedBox(height: 12),
               ..._inputs(),
               _field(countCtrl, 'تعداد (شاخه / عدد)', 'مثلا 1'),
+              _field(priceCtrl, 'قیمت واحد (تومان / کیلوگرم)', 'مثلا 450000'),
               const SizedBox(height: 4),
               FilledButton(
                 onPressed: _calc,
@@ -266,6 +284,13 @@ class _CalculatorPageState extends State<CalculatorPage> {
                       const SizedBox(height: 6),
                       Text(
                         'وزن کل: ${weightTotal!.toStringAsFixed(3)} کیلوگرم',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      const Divider(),
+                      const SizedBox(height: 4),
+                      Text(
+                        'قیمت کل: ${_formatMoney(totalPrice ?? 0)} تومان',
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ],
