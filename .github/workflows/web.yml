@@ -4,9 +4,6 @@ name: Deploy Web
   workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - 'lib/**'
-      - 'pubspec.yaml'
 
 permissions:
   contents: read
