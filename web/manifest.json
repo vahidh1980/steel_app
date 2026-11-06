@@ -1,6 +1,6 @@
 {
-    "name": "steel_app",
-    "short_name": "steel_app",
+    "name": "محاسبه‌گر وزن مقاطع استنلس استیل",,
+    "short_name": "محاسبه‌گر استیل",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
